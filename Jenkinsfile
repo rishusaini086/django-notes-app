@@ -1,3 +1,5 @@
+@Library("shared") _
+
 pipeline {
     agent { label 'vinod' }
     stages{
@@ -8,25 +10,24 @@ pipeline {
         }
         stage('Clone Code'){
             steps{
-
-                   git url:"https://github.com/rishusaini086/django-notes-app.git", branch:"main"
+                script{
+                    clone("https://github.com/rishusaini086/django-notes-app.git","main")
+                }
             }
         }
         stage('Build Code'){
             steps{
-                echo "Building the code"
-                sh "docker build -t django-notes-app:latest ."
-                echo "Build Completed"
+                script{
+                    docker_build("rajatkumar416","django-notes-app","latest")
+                }
             }
         }
         stage("Push to DockerHub"){
             steps{
-                withCredentials([usernamePassword('credentialsId':"docker-creds",passwordVariable:"dockerPass",usernameVariable:"dockerUser")]){
-                    sh "docker login -u ${dockerUser} -p ${dockerPass}"
-                    sh "docker image tag django-notes-app:latest ${dockerUser}/django-notes-app:latest "
-                    sh "docker push ${dockerUser}/django-notes-app:latest"
-                }
-                
+                script
+                    {
+                        docker_push("rajatkumar416","django-notes-app","latest")
+                    }
             }
         }
         stage('Test Code'){
@@ -36,8 +37,9 @@ pipeline {
         }
         stage('Deploying Code'){
             steps{
-                echo "Deploying the code"
-                sh "docker compose up -d"
+                script{
+                    docker_deploy()
+                }
             }
         }
     }
